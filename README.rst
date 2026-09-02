@@ -1,16 +1,6 @@
 Momoko
 ======
 
-.. image:: https://img.shields.io/pypi/v/momoko.svg
-    :target: https://pypi.python.org/pypi/momoko
-
-.. image:: https://img.shields.io/travis/FSX/momoko.svg
-        :target: https://travis-ci.org/FSX/momoko
-
-.. image:: https://img.shields.io/pypi/dm/momoko.svg
-    :target: https://pypi.python.org/pypi/momoko       
-        
-
 Momoko wraps Psycopg2_'s functionality for use in Tornado_. Have a look at tutorial_ or full documentation_.
 
 **Important:** This is the 2.x version of Momoko. It requires Tornado 4.0 or newer, uses futures instead of callbacks,
