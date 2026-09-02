@@ -187,7 +187,7 @@ class Pool(object):
     :type max_size: int or None
 
     :param ioloop:
-        Tornado IOloop instance to use. Defaults to Tornado's ``IOLoop.instance()``.
+        Tornado IOLoop instance to use. Defaults to Tornado's ``IOLoop.current()``.
 
     :param bool raise_connect_errors:
         Whether to raise :py:meth:`momoko.PartiallyConnectedError` when failing to
@@ -258,7 +258,7 @@ class Pool(object):
         self.closed = False
         self.server_version = None
 
-        self.ioloop = ioloop or IOLoop.instance()
+        self.ioloop = ioloop or IOLoop.current()
 
         self.conns = ConnectionContainer()
 
@@ -668,7 +668,7 @@ class Connection(object):
         self.dsn = dsn
         self.connection_factory = connection_factory
         self.cursor_factory = cursor_factory
-        self.ioloop = ioloop or IOLoop.instance()
+        self.ioloop = ioloop or IOLoop.current()
         self.setsession = setsession
 
     def connect(self):

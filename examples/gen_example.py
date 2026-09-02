@@ -188,7 +188,7 @@ def main():
             (r'/connection', ConnectionQueryHandler),
         ], debug=True)
 
-        ioloop = tornado.ioloop.IOLoop.instance()
+        ioloop = tornado.ioloop.IOLoop.current()
 
         application.db = momoko.Pool(
             dsn=dsn,

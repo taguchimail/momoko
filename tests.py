@@ -11,7 +11,6 @@ import logging
 import datetime
 import subprocess
 
-import tornado
 from tornado import gen
 from tornado.testing import unittest, AsyncTestCase, gen_test
 
@@ -401,6 +400,36 @@ class MomokoConnectionFactoriesTest(BaseTest):
 #
 # Pool tests
 #
+
+
+class MomokoPoolStateTest(BaseTest):
+    def test_default_ioloop_is_current(self):
+        pool = momoko.Pool(dsn="dbname=unused")
+        connection = momoko.Connection(dsn="dbname=unused")
+
+        self.assertIs(pool.ioloop, self.io_loop)
+        self.assertIs(connection.ioloop, self.io_loop)
+        pool.close()
+
+    def test_abort_waiting_queue(self):
+        """Waiting clients are notified when the last connection dies."""
+        class FakeConnection(object):
+            fileno = 1
+            closed = False
+
+        db = momoko.Pool(dsn="dbname=unused", size=1, ioloop=self.io_loop)
+        conn = FakeConnection()
+        db.conns.busy.add(conn)
+
+        waiting = db.getconn(ping=False)
+        self.assertEqual(len(db.conns.waiting_queue), 1)
+
+        conn.closed = True
+        db.putconn(conn)
+
+        self.assertEqual(len(db.conns.waiting_queue), 0)
+        self.assertRaises(db.DatabaseNotAvailable, waiting.result)
+        db.close()
 
 
 class PoolBaseTest(BaseTest):
@@ -862,26 +891,6 @@ class MomokoPoolVolatileDbTest(PoolBaseTest):
         except db.DatabaseNotAvailable:
             pass
 
-    @unittest.skipIf(tornado.version_info[0] == 5, "This test does not work with Tornado 5.x for reasons yet known")
-    @gen_test
-    def test_abort_waiting_queue(self, final_exception=momoko.Pool.DatabaseNotAvailable):
-        """Testing that waiting queue is aborted properly when all connections are dead"""
-        db = yield self.build_pool(dsn=self.good_dsn, size=1)
-        f1 = db.execute("SELECT 1")
-        f2 = db.execute("SELECT 1")
-
-        self.assertEqual(len(db.conns.waiting_queue), 1)
-
-        f1.add_done_callback(lambda f: self.total_close(db))
-        f1.add_done_callback(lambda f: log.debug("f1 done"))
-
-        try:
-            yield [f1, f2]
-        except psycopg2.DatabaseError:
-            pass
-        self.assertEqual(len(db.conns.waiting_queue), 0)
-        self.assertRaises(final_exception, f2.result)
-
     @gen_test
     def test_execute_can_start_before_connection_is_done(self):
         db = momoko.Pool(dsn=self.good_dsn, size=1, ioloop=self.io_loop)
@@ -917,16 +926,6 @@ class MomokoPoolVolatileDbTest(PoolBaseTest):
 
 
 class MomokoPoolVolatileDbTestProxy(ProxyMixIn, MomokoPoolVolatileDbTest):
-
-    def test_abort_waiting_queue(self):
-        # In case of the real database disconnect we won't
-        # get DatabaseNotAvailable exception, since restarting
-        # proxy as part of total_close() will not immediately
-        # mark connections are closed and thus release() method
-        # will resume next future from the queue (which in turn
-        # will fail later on while connecting to non-existent server)
-        super(MomokoPoolVolatileDbTestProxy, self).test_abort_waiting_queue(psycopg2.OperationalError)
-
     @gen_test
     def test_execute_can_wait_for_connection_after_disconnect(self):
         db = yield self.build_pool(dsn=self.good_dsn, size=1)

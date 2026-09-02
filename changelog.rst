@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+----------
+*  Allow installation with Tornado 6 and later.
+*  Use ``IOLoop.current()`` instead of the deprecated ``IOLoop.instance()`` alias.
+*  Make the waiting-queue test independent of pre-Tornado-5 callback ordering.
+
 2.2.5.1 (2018-11-05)
 --------------------
 *  Updated README (mainly for PyPi)

@@ -33,7 +33,7 @@ And this is how the same code looks with Momoko/Tornado::
 
     import momoko
     from tornado.ioloop import IOLoop
-    ioloop = IOLoop.instance()
+    ioloop = IOLoop.current()
 
     conn = momoko.Connection(dsn="...")
     future = conn.connect()
@@ -108,7 +108,7 @@ to demonstrate Momoko's functionality. Here it goes::
             (r'/', TutorialHandler)
         ], debug=True)
 
-        ioloop = IOLoop.instance()
+        ioloop = IOLoop.current()
 
         application.db = momoko.Pool(
             dsn='dbname=your_db user=your_user password=very_secret_password '
@@ -224,8 +224,5 @@ Here is the server-side cursor example (based on the code in momoko unittests)::
 .. _fetchone: http://initd.org/psycopg/docs/cursor.html#cursor.fetchone
 .. _fetchmany: http://initd.org/psycopg/docs/cursor.html#cursor.fetchmany
 .. _fetchall: http://initd.org/psycopg/docs/cursor.html#cursor.fetchall
-.. _Task: http://tornado.readthedocs.org/en/stable/gen.html#tornado.gen.Task
-.. _Wait: http://tornado.readthedocs.org/en/stable/gen.html#tornado.gen.Wait
-.. _WaitAll: http://tornado.readthedocs.org/en/stable/gen.html#tornado.gen.WaitAll
 .. _exceptions: http://initd.org/psycopg/docs/module.html#exceptions
 .. _future: http://tornado.readthedocs.org/en/latest/concurrent.html

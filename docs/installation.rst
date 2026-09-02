@@ -44,7 +44,7 @@ of tcproxy is bundled with Momoko, but you need to build it first::
 
 Finally, running the tests is easy::
 
-   python setup.py test
+   python -m unittest -v tests
 
 
 .. _tcproxy: https://github.com/dccmx/tcproxy
