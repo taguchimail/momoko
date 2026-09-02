@@ -181,6 +181,44 @@ class BaseDataTest(BaseTest):
 
 
 class MomokoConnectionTest(BaseTest):
+    def test_connect_replaces_stale_handler(self):
+        """A reconnect can reuse a descriptor before the old handler runs."""
+        class FakeIOLoop(object):
+            def __init__(self):
+                self.handlers = {91: "stale handler"}
+
+            def add_handler(self, fd, callback, events):
+                if fd in self.handlers:
+                    raise ValueError("fd %s added twice" % fd)
+                self.handlers[fd] = callback
+
+            def remove_handler(self, fd):
+                self.handlers.pop(fd, None)
+
+            def add_future(self, future, callback):
+                pass
+
+        class FakePsycopgConnection(object):
+            closed = False
+
+            def fileno(self):
+                return 91
+
+            def close(self):
+                self.closed = True
+
+        io_loop = FakeIOLoop()
+        real_connect = psycopg2.connect
+        psycopg2.connect = lambda *args, **kwargs: FakePsycopgConnection()
+        try:
+            conn = momoko.Connection("dbname=unused", ioloop=io_loop)
+            conn.connect()
+        finally:
+            psycopg2.connect = real_connect
+
+        self.assertNotEqual(io_loop.handlers[91], "stale handler")
+        conn.close()
+
     @gen_test
     def test_connect(self):
         """Test that Connection can connect to the database"""

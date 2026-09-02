@@ -705,6 +705,13 @@ class Connection(object):
         else:
             callback = partial(self._io_callback, future, self)
 
+        # A closed libpq connection can leave its handler behind until the
+        # IOLoop gets another turn. The operating system may reuse that file
+        # descriptor immediately for this new connection, and AsyncIOLoop
+        # rejects registering the recycled descriptor twice. Since this is a
+        # newly opened socket, any existing handler for its descriptor is
+        # necessarily stale.
+        self.ioloop.remove_handler(self.fileno)
         self.ioloop.add_handler(self.fileno, callback, IOLoop.WRITE)
         self.ioloop.add_future(future, self._set_server_version)
         self.ioloop.add_future(future, self._close_on_fail)
